@@ -49,7 +49,7 @@ if __name__ == "__main__":
         "dense_dim": 128,
     }
 
-    model = get_model(vocab_size=1050 if args.mode == "char" else 99, **model_config)
+    model = get_model(vocab_size=1050 if args.mode == "char" else 27677, **model_config)
     bucket.download_file(f"artifacts/{MODELNAME}.h5", f"artifacts/{MODELNAME}.h5")
 
     bucket.download_file(
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         generate_from_model(
             model,
             "I think max",
-            20,
+            20 if args.mode == "word" else 150,
             tokenizer=tokenizer,
             char_level=True if args.mode == "char" else False,
         )
