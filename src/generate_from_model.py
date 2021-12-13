@@ -7,6 +7,11 @@ import numpy as np
 import tensorflow as tf
 
 from modeling.model_definition import get_model
+import argparse
+
+parser = argparse.ArgumentParser(description="Generate from model")
+parser.add_argument("--mode", type=str, default="word", help="word or char")
+args, _ = parser.parse_known_args()
 
 
 def generate_from_model(model, seed, length, tokenizer, char_level=False):
@@ -25,8 +30,12 @@ def generate_from_model(model, seed, length, tokenizer, char_level=False):
 
 
 if __name__ == "__main__":
-    MODELNAME = "model1_charbased"
-    TOKENIZER_NAME = "char_tokenizer"
+    if args.mode == "char":
+        MODELNAME = "model1_charbased"
+        TOKENIZER_NAME = "char_tokenizer"
+    else:
+        MODELNAME = "model0_wordbased"
+        TOKENIZER_NAME = "word_tokenizer"
 
     bucket = boto3.resource(
         "s3",
@@ -35,12 +44,12 @@ if __name__ == "__main__":
     ).Bucket("deep-text-generation")
 
     model_config = {
-        "embedding_dim": 64,
-        "gru_dim": 64,
-        "dense_dim": 64,
+        "embedding_dim": 128,
+        "gru_dim": 128,
+        "dense_dim": 128,
     }
 
-    model = get_model(vocab_size=1050, **model_config)
+    model = get_model(vocab_size=1050 if args.mode == "char" else 99, **model_config)
     bucket.download_file(f"artifacts/{MODELNAME}.h5", f"artifacts/{MODELNAME}.h5")
 
     bucket.download_file(
@@ -54,6 +63,10 @@ if __name__ == "__main__":
     model.load_weights(f"artifacts/{MODELNAME}.h5")
     print(
         generate_from_model(
-            model, "I think max", 20, tokenizer=tokenizer, char_level=False
+            model,
+            "I think max",
+            20,
+            tokenizer=tokenizer,
+            char_level=True if args.mode == "char" else False,
         )
     )

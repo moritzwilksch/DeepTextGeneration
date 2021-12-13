@@ -10,13 +10,13 @@ import argparse
 from data_loading import get_tokenized_sequences
 from model_definition import get_model
 
-argparser = argparse.ArgumentParser(description="Train a word-based model")
-argparser.add_argument("--embedding_dim", type=int, default=32)
-argparser.add_argument("--gru_dim", type=int, default=32)
-argparser.add_argument("--dense_dim", type=int, default=32)
-argparser.add_argument("--batch_size", type=int, default=256)
-argparser.add_argument("--learning_rate", type=float, default=0.0001)
-args, _ = argparser.parse_known_args()
+parser = argparse.ArgumentParser(description="Train a word-based model")
+parser.add_argument("--embedding_dim", type=int, default=32)
+parser.add_argument("--gru_dim", type=int, default=32)
+parser.add_argument("--dense_dim", type=int, default=32)
+parser.add_argument("--batch_size", type=int, default=256)
+parser.add_argument("--learning_rate", type=float, default=0.0001)
+args, _ = parser.parse_known_args()
 logging.basicConfig(level=logging.INFO)
 
 
