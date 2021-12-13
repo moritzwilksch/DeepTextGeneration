@@ -32,13 +32,14 @@ bucket = boto3.resource(
     val_seq_x,
     val_seq_y,
     vocab_size,
-) = get_tokenized_sequences(bucket, char_level=False)
+) = get_tokenized_sequences(bucket, char_level=True)
 
 # create tf data set
 train = tf.data.Dataset.from_tensor_slices((train_seq_x, train_seq_y))
 val = tf.data.Dataset.from_tensor_slices((val_seq_x, val_seq_y))
 
 logging.info("Created train sequences")
+
 #%%
 def get_model(
     embedding_dim=32, gru_dim=32, dense_dim=32, learning_rate=0.0001
