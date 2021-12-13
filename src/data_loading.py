@@ -49,10 +49,10 @@ def get_tokenized_sequences(bucket, char_level: bool = False):
 
     # padding
     train_seq_x = tf.keras.preprocessing.sequence.pad_sequences(
-        train_seq_x, padding="post", truncating="post", maxlen=75
+        train_seq_x, padding="post", truncating="post", maxlen=280 if char_level else 75
     )
     val_seq_x = tf.keras.preprocessing.sequence.pad_sequences(
-        val_seq_x, padding="post", truncating="post", maxlen=75
+        val_seq_x, padding="post", truncating="post", maxlen=280 if char_level else 75
     )
 
     return tokenizer, train_seq_x, train_seq_y, val_seq_x, val_seq_y, vocab_size

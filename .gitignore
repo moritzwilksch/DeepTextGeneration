@@ -1,7 +1,8 @@
 # Custom
 data/*.parquet
 data/*.txt
-
+*.h5
+artifacts/*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 import logging
 import argparse
 from data_loading import get_tokenized_sequences
+from src.model_definition import get_model
 
 argparser = argparse.ArgumentParser(description="Train a word-based model")
 argparser.add_argument("--embedding_dim", type=int, default=32)
@@ -34,37 +35,20 @@ bucket = boto3.resource(
     vocab_size,
 ) = get_tokenized_sequences(bucket, char_level=False)
 
+with open("artifacts/word_tokenizer.json", "w") as f:
+    f.write(tokenizer.to_json())
+    bucket.upload_file("artifacts/word_tokenizer.json", "artifacts/word_tokenizer.json")
+
 # create tf data set
 train = tf.data.Dataset.from_tensor_slices((train_seq_x, train_seq_y))
 val = tf.data.Dataset.from_tensor_slices((val_seq_x, val_seq_y))
 
 logging.info("Created train sequences")
 #%%
-def get_model(
-    embedding_dim=32, gru_dim=32, dense_dim=32, learning_rate=0.0001
-) -> tf.keras.Model:
-    model = tf.keras.Sequential()
-    model.add(
-        tf.keras.layers.Embedding(
-            input_dim=vocab_size,
-            output_dim=embedding_dim,
-            mask_zero=True,
-            input_length=None,
-        )
-    )
-    # model.add(tf.keras.layers.GRU(units=gru_dim, return_sequences=True))
-    model.add(tf.keras.layers.GRU(units=gru_dim))
-    model.add(tf.keras.layers.Dense(dense_dim, activation="relu"))
-    model.add(tf.keras.layers.Dense(vocab_size, activation="softmax"))
-    model.compile(
-        loss="sparse_categorical_crossentropy",
-        optimizer=tf.keras.optimizers.Adam(learning_rate),
-        metrics=["accuracy"],
-    )
-    return model
 
 
 model = get_model(
+    vocab_size=vocab_size,
     embedding_dim=args.embedding_dim,
     gru_dim=args.gru_dim,
     dense_dim=args.dense_dim,
@@ -74,3 +58,7 @@ model.summary()
 
 #%%
 model.fit(train.batch(args.batch_size), epochs=10, validation_data=val.batch(512))
+
+#%%
+model.save_weights("../artifacts/model0_wordbased.h5")
+bucket.upload_file("../artifacts/model0_wordbased.h5", "artifacts/model0_wordbased.h5")
