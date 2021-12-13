@@ -5,6 +5,12 @@ import time
 import joblib
 import logging
 import pandas as pd
+import boto3
+import io
+
+bucket = boto3.resource(
+    "s3", aws_access_key_id=os.getenv("AWS_AK"), aws_secret_access_key=os.getenv("AWS_SAK")
+).Bucket("deep-text-generation")
 
 
 #%%
@@ -40,6 +46,7 @@ def pull_tweets_for_hashtag(hashtag: str, n_tweets: int = 1_000):
         logging.info(f"Sending request {ii}")
         try:
             response = requests.request("GET", url, headers=headers, params=params)
+
             response_json = response.json()
             result_list = result_list + response_json["data"]
             params["next_token"] = response_json["meta"]["next_token"]
@@ -58,10 +65,15 @@ def pull_tweets_for_hashtag(hashtag: str, n_tweets: int = 1_000):
             ii += 1
             time.sleep(0.2)
 
-
     result_df = pd.DataFrame(result_list)
-    result_df.to_parquet(f"../data/api_{hashtag}.parquet")
+
+    with io.BytesIO() as f:
+        result_df.to_parquet(f)
+        f.seek(0)
+        bucket.upload_fileobj(f, f"data/{hashtag}.parquet")
+
     logging.info("Saved final parquet.")
+
 
     return result_df
 
@@ -69,5 +81,5 @@ def pull_tweets_for_hashtag(hashtag: str, n_tweets: int = 1_000):
 if __name__ == "__main__":
     HASHTAG = "formula1"
 
-    pull_tweets_for_hashtag(HASHTAG, n_tweets=10)
+    pull_tweets_for_hashtag(HASHTAG, n_tweets=100_000)
     logging.info(f"Terminating.")

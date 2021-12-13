@@ -1,5 +1,6 @@
 # Custom
 data/*.parquet
+data/*.txt
 
 
 # Byte-compiled / optimized / DLL files
