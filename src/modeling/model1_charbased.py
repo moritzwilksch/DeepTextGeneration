@@ -47,7 +47,6 @@ val = tf.data.Dataset.from_tensor_slices((val_seq_x, val_seq_y))
 logging.info("Created train sequences")
 
 
-
 model = get_model(
     vocab_size=vocab_size,
     embedding_dim=args.embedding_dim,

@@ -70,6 +70,7 @@ def filter_too_many_hashtags(data: pd.DataFrame) -> pd.DataFrame:
     ht_to_word_ratio = data["text"].str.count("#") / data["text"].str.split().str.len()
     return data[ht_to_word_ratio <= 0.5]
 
+
 def normalize_text(data: pd.DataFrame) -> pd.DataFrame:
     data["text"] = data["text"].str.lower()
     return data

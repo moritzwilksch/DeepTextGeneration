@@ -9,7 +9,9 @@ import boto3
 import io
 
 bucket = boto3.resource(
-    "s3", aws_access_key_id=os.getenv("AWS_AK"), aws_secret_access_key=os.getenv("AWS_SAK")
+    "s3",
+    aws_access_key_id=os.getenv("AWS_AK"),
+    aws_secret_access_key=os.getenv("AWS_SAK"),
 ).Bucket("deep-text-generation")
 
 
@@ -73,7 +75,6 @@ def pull_tweets_for_hashtag(hashtag: str, n_tweets: int = 1_000):
         bucket.upload_fileobj(f, f"data/{hashtag}.parquet")
 
     logging.info("Saved final parquet.")
-
 
     return result_df
 

@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 def get_model(
     vocab_size, embedding_dim=32, gru_dim=32, dense_dim=32, learning_rate=0.0001
 ) -> tf.keras.Model:
