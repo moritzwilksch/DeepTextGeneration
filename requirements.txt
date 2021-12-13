@@ -1,0 +1,6 @@
+requests
+pyarrow
+joblib
+black
+pandas
+boto3
