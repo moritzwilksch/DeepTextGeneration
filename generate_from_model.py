@@ -1,7 +1,7 @@
 #%%
 import boto3
 import io
-from src.model_definition import get_model
+from model_definition import get_model
 import os
 
 

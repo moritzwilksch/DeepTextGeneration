@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import logging
 import argparse
 from data_loading import get_tokenized_sequences
-from src.model_definition import get_model
+from model_definition import get_model
 
 argparser = argparse.ArgumentParser(description="Train a word-based model")
 argparser.add_argument("--embedding_dim", type=int, default=32)
@@ -61,5 +61,5 @@ model.summary()
 model.fit(train.batch(args.batch_size), epochs=10, validation_data=val.batch(512))
 
 #%%
-model.save_weights("../artifacts/model1_charbased.h5")
-bucket.upload_file("../artifacts/model1_charbased.h5", "artifacts/model1_charbased.h5")
+model.save_weights("artifacts/model1_charbased.h5")
+bucket.upload_file("artifacts/model1_charbased.h5", "artifacts/model1_charbased.h5")

@@ -37,7 +37,7 @@ with io.BytesIO() as f:
     df = pd.read_parquet(f)
 
 #%%
-with open("../data/tweets.txt", "w") as f:
+with open("data/tweets.txt", "w") as f:
     f.writelines(df["text"].to_list())
 
 #%%
