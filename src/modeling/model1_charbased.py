@@ -17,7 +17,8 @@ parser.add_argument("--dense_dim", type=int, default=32)
 parser.add_argument("--batch_size", type=int, default=256)
 parser.add_argument("--learning_rate", type=float, default=0.0001)
 args, _ = parser.parse_known_args()
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+
 
 
 bucket = boto3.resource(
@@ -62,3 +63,4 @@ model.fit(train.batch(args.batch_size), epochs=10, validation_data=val.batch(512
 #%%
 model.save_weights("artifacts/model1_charbased.h5")
 bucket.upload_file("artifacts/model1_charbased.h5", "artifacts/model1_charbased.h5")
+logging.info("Saved model weights.")

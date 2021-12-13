@@ -16,7 +16,7 @@ bucket = boto3.resource(
 
 
 #%%
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 #%%
 def pull_tweets_for_hashtag(hashtag: str, n_tweets: int = 1_000):

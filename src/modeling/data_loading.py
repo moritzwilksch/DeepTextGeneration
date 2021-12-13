@@ -4,7 +4,8 @@ import io
 from sklearn.model_selection import train_test_split
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+
 
 
 def gen_expanding_window_seq(raw_seq):

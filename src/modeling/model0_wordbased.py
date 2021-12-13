@@ -14,10 +14,12 @@ parser = argparse.ArgumentParser(description="Train a word-based model")
 parser.add_argument("--embedding_dim", type=int, default=32)
 parser.add_argument("--gru_dim", type=int, default=32)
 parser.add_argument("--dense_dim", type=int, default=32)
+parser.add_argument("--dropout", type=float, default=0.2)
 parser.add_argument("--batch_size", type=int, default=256)
 parser.add_argument("--learning_rate", type=float, default=0.0001)
 args, _ = parser.parse_known_args()
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+
 
 
 bucket = boto3.resource(
@@ -51,6 +53,7 @@ model = get_model(
     vocab_size=vocab_size,
     embedding_dim=args.embedding_dim,
     gru_dim=args.gru_dim,
+    dropout=args.dropout,
     dense_dim=args.dense_dim,
     learning_rate=args.learning_rate,
 )
@@ -62,3 +65,4 @@ model.fit(train.batch(args.batch_size), epochs=10, validation_data=val.batch(512
 #%%
 model.save_weights("artifacts/model0_wordbased.h5")
 bucket.upload_file("artifacts/model0_wordbased.h5", "artifacts/model0_wordbased.h5")
+logging.info("Saved model weights.")
