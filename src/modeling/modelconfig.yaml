@@ -1,0 +1,23 @@
+# Word-based model
+word:
+  architecture:
+    embedding_dim: 128
+    gru_dim: 128
+    dense_dim: 128
+    dropout: 0.5
+    
+  training:
+    batch_size: 512
+    learning_rate: 0.001
+
+# Character-based model
+char:
+  architecture:
+    embedding_dim: 128
+    gru_dim: 128
+    dense_dim: 128
+    dropout: 0.5
+    
+  training:
+    batch_size: 512
+    learning_rate: 0.001

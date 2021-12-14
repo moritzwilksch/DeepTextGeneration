@@ -1,5 +1,4 @@
 #%%
-import io
 import os
 
 import boto3
@@ -8,7 +7,9 @@ import tensorflow as tf
 
 from modeling.model_definition import get_model
 import argparse
+import yaml
 
+#%%
 parser = argparse.ArgumentParser(description="Generate from model")
 parser.add_argument("--mode", type=str, default="word", help="word or char")
 args, _ = parser.parse_known_args()
@@ -33,9 +34,15 @@ if __name__ == "__main__":
     if args.mode == "char":
         MODELNAME = "model1_charbased"
         TOKENIZER_NAME = "char_tokenizer"
+
+        with open("src/modeling/modelconfig.yaml") as f:
+            config = yaml.safe_load(f)["char"]
     else:
         MODELNAME = "model0_wordbased"
         TOKENIZER_NAME = "word_tokenizer"
+
+        with open("src/modeling/modelconfig.yaml") as f:
+            config = yaml.safe_load(f)["word"]
 
     bucket = boto3.resource(
         "s3",
@@ -43,11 +50,7 @@ if __name__ == "__main__":
         aws_secret_access_key=os.getenv("AWS_SAK"),
     ).Bucket("deep-text-generation")
 
-    model_config = {
-        "embedding_dim": 128,
-        "gru_dim": 128,
-        "dense_dim": 128,
-    }
+    model_config = config["architecture"]
 
     model = get_model(vocab_size=1050 if args.mode == "char" else 27677, **model_config)
     bucket.download_file(f"artifacts/{MODELNAME}.h5", f"artifacts/{MODELNAME}.h5")
@@ -64,7 +67,7 @@ if __name__ == "__main__":
     print(
         generate_from_model(
             model,
-            "I think max",
+            "What a great race!",
             20 if args.mode == "word" else 150,
             tokenizer=tokenizer,
             char_level=True if args.mode == "char" else False,

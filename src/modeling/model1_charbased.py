@@ -1,25 +1,15 @@
 #%%
 import tensorflow as tf
-import numpy as np
-import io
 import boto3
 import os
-from sklearn.model_selection import train_test_split
 import logging
-import argparse
 from data_loading import get_tokenized_sequences
 from model_definition import get_model
+import yaml
 
-parser = argparse.ArgumentParser(description="Train a word-based model")
-parser.add_argument("--embedding_dim", type=int, default=32)
-parser.add_argument("--gru_dim", type=int, default=32)
-parser.add_argument("--dense_dim", type=int, default=32)
-parser.add_argument("--batch_size", type=int, default=256)
-parser.add_argument("--learning_rate", type=float, default=0.0001)
-args, _ = parser.parse_known_args()
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-
-
+#%%
+with open("src/modeling/modelconfig.yaml") as f:
+    config = yaml.safe_load(f)["char"]
 
 bucket = boto3.resource(
     "s3",
@@ -50,16 +40,20 @@ logging.info("Created train sequences")
 
 model = get_model(
     vocab_size=vocab_size,
-    embedding_dim=args.embedding_dim,
-    gru_dim=args.gru_dim,
-    dense_dim=args.dense_dim,
-    learning_rate=args.learning_rate,
+    embedding_dim=config["architecture"].get("embedding_dim"),
+    gru_dim=config["architecture"].get("gru_dim"),
+    dropout=config["architecture"].get("dropout"),
+    dense_dim=config["architecture"].get("dense_dim"),
+    learning_rate=config["training"].get("learning_rate"),
 )
 model.summary()
 
 #%%
-model.fit(train.batch(args.batch_size), epochs=10, validation_data=val.batch(512))
-
+model.fit(
+    train.batch(config["training"].get("batch_size")),
+    epochs=10,
+    validation_data=val.batch(512),
+)
 #%%
 model.save_weights("artifacts/model1_charbased.h5")
 bucket.upload_file("artifacts/model1_charbased.h5", "artifacts/model1_charbased.h5")

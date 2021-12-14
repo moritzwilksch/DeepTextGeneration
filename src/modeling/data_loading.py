@@ -7,7 +7,6 @@ import logging
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 
-
 def gen_expanding_window_seq(raw_seq):
     seq_x = []
     seq_y = []

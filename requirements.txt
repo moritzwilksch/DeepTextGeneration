@@ -6,3 +6,4 @@ pandas
 boto3
 scikit-learn
 tensorflow==2.7.0
+pyyaml
