@@ -17,14 +17,14 @@ args, _ = parser.parse_known_args()
 
 def generate_from_model(model, seed, length, tokenizer, char_level=False):
 
-    result_tokens = seed.split()
+    result_tokens = seed.split() if char_level == False else [char for char in seed]
     for _ in range(length):
         tokenized_input = tokenizer.texts_to_sequences([result_tokens])
         prediction = model.predict(tokenized_input, verbose=0)[0]
         next_index = np.random.choice(
             np.arange(prediction.shape[0]), p=prediction, size=1
         )[0]
-        next_word = tokenizer.index_word[next_index]
+        next_word = tokenizer.index_word.get(next_index, "<NOTOKEN>")
         result_tokens.append(next_word)
 
     return "".join(result_tokens) if char_level else " ".join(result_tokens)
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     model_config = config["architecture"]
 
-    model = get_model(vocab_size=1050 if args.mode == "char" else 27677, **model_config)
+    # model = get_model(vocab_size=1050 if args.mode == "char" else 19150, **model_config)
     bucket.download_file(f"artifacts/{MODELNAME}.h5", f"artifacts/{MODELNAME}.h5")
 
     bucket.download_file(
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     print(
         generate_from_model(
             model,
-            "What a great race!",
+            "I think max",
             20 if args.mode == "word" else 150,
             tokenizer=tokenizer,
             char_level=True if args.mode == "char" else False,

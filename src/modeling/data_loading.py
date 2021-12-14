@@ -41,9 +41,9 @@ def get_tokenized_sequences(bucket, char_level: bool = False):
     tokenizer.fit_on_texts(tweets_train)
 
     # remove low occurences
-    words_few_occurences = [word for word, count in tokenizer.word_counts.items() if count <= 1]
-    for word in words_few_occurences:
-        tokenizer.word_index[word] = 0
+    # words_few_occurences = [word for word, count in tokenizer.word_counts.items() if count <= 1]
+    # for word in words_few_occurences:
+    #     tokenizer.word_index[word] = 0
 
     raw_seq_train = tokenizer.texts_to_sequences(tweets_train)
     raw_seq_val = tokenizer.texts_to_sequences(tweets_val)
