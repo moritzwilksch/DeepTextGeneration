@@ -22,6 +22,8 @@ EMOJI_REGEX = re.compile(
     "])"
 )
 
+PUNCTUATION_REGEX = r"(?P<punct>[!\"#$%&()*+,\-.\/:;<=>?@[\\\]\^_`{\|}~])"
+
 bucket = boto3.resource(
     "s3",
     aws_access_key_id=os.getenv("AWS_AK"),
@@ -61,6 +63,11 @@ def space_out_emojis(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
+def space_out_punctuation(data: pd.DataFrame) -> pd.DataFrame:
+    data["text"] = data["text"].apply(lambda tweet: re.sub(PUNCTUATION_REGEX, " \\g<punct> ", tweet))
+    return data
+
+
 def remove_multi_spaces(data: pd.DataFrame) -> pd.DataFrame:
     data["text"] = data["text"].str.replace(r"\s+", " ", regex=True).str.strip()
     return data
@@ -81,6 +88,7 @@ clean = (
     .pipe(remove_usernames)
     .pipe(remove_urls)
     .pipe(space_out_emojis)
+    .pipe(space_out_punctuation)
     .pipe(remove_multi_spaces)
     .pipe(filter_too_many_hashtags)
     .pipe(normalize_text)
