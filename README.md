@@ -7,6 +7,7 @@
 - [ ] try exponential LR decay 
 - [ ] try subword tokenizer
 - [ ] implement temperature
+- [ ] try [keras mini GPT example](https://keras.io/examples/generative/text_generation_with_miniature_gpt/)
 
 # Data 💿
 WIP.
