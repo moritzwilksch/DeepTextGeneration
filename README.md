@@ -8,7 +8,7 @@
 - [ ] try subword tokenizer
 - [ ] implement temperature
 - [ ] try [keras mini GPT example](https://keras.io/examples/generative/text_generation_with_miniature_gpt/)
-- [ ] use German recipe data set for more standardized corpus
+- [ ] use [German recipes](https://www.kaggle.com/sterby/german-recipes-dataset) data set for more standardized corpus
 
 # Data 💿
 WIP.
