@@ -30,7 +30,8 @@ def get_tokenized_sequences(bucket, char_level: bool = False):
     )
 
     with io.BytesIO() as f:
-        bucket.download_fileobj("data/formula1_cleaned.txt", f)
+        # bucket.download_fileobj("data/formula1_cleaned.txt", f)
+        bucket.download_fileobj("data/recipe_corpus.txt", f)
         f.seek(0)
         corpus = f.readlines()
     tweets = [line.decode("utf-8").strip() for line in corpus]
