@@ -15,12 +15,21 @@ parser.add_argument("--mode", type=str, default="word", help="word or char")
 args, _ = parser.parse_known_args()
 
 
-def generate_from_model(model, seed, length, tokenizer, char_level=False):
+def infuse_temperature(predictions, temperature):
+    logits = np.log(predictions) / temperature
+    return np.exp(logits) / np.sum(np.exp(logits))
+
+
+def generate_from_model(
+    model, seed, length, tokenizer, char_level=False, temperature=1.0
+):
 
     result_tokens = seed.split() if char_level == False else [char for char in seed]
     for _ in range(length):
         tokenized_input = tokenizer.texts_to_sequences([result_tokens])
         prediction = model.predict(tokenized_input, verbose=0)[0]
+        predictions = infuse_temperature(prediction, temperature)
+
         next_index = np.random.choice(
             np.arange(prediction.shape[0]), p=prediction, size=1
         )[0]
@@ -67,9 +76,10 @@ if __name__ == "__main__":
     print(
         generate_from_model(
             model,
-            "I think max",
+            "Zuerst Hähnchen",
             20 if args.mode == "word" else 150,
             tokenizer=tokenizer,
             char_level=True if args.mode == "char" else False,
+            temperature=0.9,
         )
     )
