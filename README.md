@@ -8,7 +8,8 @@
 - [ ] try subword tokenizer
 - [ ] implement temperature
 - [ ] try [keras mini GPT example](https://keras.io/examples/generative/text_generation_with_miniature_gpt/)
-- [ ] use [German recipes](https://www.kaggle.com/sterby/german-recipes-dataset) data set for more standardized corpus
+- [x] use [German recipes](https://www.kaggle.com/sterby/german-recipes-dataset) data set for more standardized corpus
+- [ ] benchmark mixed precision: `tf.keras.mixed_precision.set_global_policy("mixed_float16")`
 - [ ] implement shifted-sequence model like [this](https://www.tensorflow.org/text/tutorials/text_generation) rather than manipulating data set 
 
 # Data 💿
