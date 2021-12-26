@@ -20,7 +20,7 @@ word_sequence:
 
   training:
     batch_size: 128
-    learning_rate: 0.001
+    learning_rate: 0.01
 
 # Character-based model
 char:

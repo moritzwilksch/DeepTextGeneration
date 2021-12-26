@@ -2,14 +2,13 @@
 import tensorflow as tf
 import boto3
 import os
-from sklearn.model_selection import train_test_split
 import logging
 import yaml
 import numpy as np
 import io
 from modeling.model_definition import get_sequence_model
 import joblib
-import tempfile
+
 
 #%%
 with open("src/modeling/modelconfig.yaml") as f:
@@ -45,27 +44,24 @@ def generate_from_model(model, ids_from_chars, seed: str, n_pred=100, temperatur
     return seed
 
 
-def main():
+if __name__ == "__main__":
+
     with io.BytesIO() as f:
         bucket.download_fileobj("artifacts/stringlookup_config.joblib", f)
         f.seek(0)
         ids_from_words = tf.keras.layers.StringLookup.from_config(joblib.load(f))
 
-
     with open("artifacts/model2_sequence.h5", "wb") as f:
         bucket.download_fileobj("artifacts/model2_sequence.h5", f)
-        model = get_sequence_model(config, ids_from_words.get_vocabulary())
+        model = get_sequence_model(
+            config, ids_from_words.get_vocabulary()[1:]
+        )  # skip [UNK] token!
 
-    model(tf.convert_to_tensor([[1,2,3]]))
+    model(tf.convert_to_tensor([[1, 2, 3]]))
     model.load_weights("artifacts/model2_sequence.h5")
-
 
     print(
         generate_from_model(
-            model, ids_from_words, "zuerst hähnchen", temperature=0.8, n_pred=50
+            model, ids_from_words, "zuerst hähnchen", temperature=0.7, n_pred=250
         )
     )
-
-
-if __name__ == "__main__":
-    main()
