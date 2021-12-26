@@ -50,6 +50,10 @@ ids_from_words = tf.keras.layers.StringLookup(
     vocabulary=list(vocabulary), mask_token=None
 )
 
+words_from_ids = tf.keras.layers.StringLookup(
+    vocabulary=list(vocabulary), mask_token=None, invert=True
+)
+
 
 print("Done.")
 
@@ -57,8 +61,8 @@ print("Done.")
 words_train = tf.strings.split(tweets_train, sep=" ")
 words_val = tf.strings.split(tweets_val, sep=" ")
 
-ids_train = ids_from_words(words_train).to_tensor(shape=(ids_train.shape[0], 75))
-ids_val = ids_from_words(words_val).to_tensor(shape=(ids_train.shape[0], 75))
+ids_train = ids_from_words(words_train).to_tensor(shape=(words_train.shape[0], 75))
+ids_val = ids_from_words(words_val).to_tensor(shape=(words_val.shape[0], 75))
 
 
 train = tf.data.Dataset.from_tensor_slices((ids_train, ids_train))
@@ -83,7 +87,8 @@ class MyModel(tf.keras.Model):
         self.gru = tf.keras.layers.GRU(
             rnn_units, return_sequences=True, return_state=True
         )
-        self.dense = tf.keras.layers.Dense(vocab_size)
+        self.dense = tf.keras.layers.Dense(1024, activation="relu")
+        self.dense_out = tf.keras.layers.Dense(vocab_size)
 
     def call(self, inputs, states=None, return_state=False, training=False):
         x = inputs
@@ -92,6 +97,7 @@ class MyModel(tf.keras.Model):
             states = self.gru.get_initial_state(x)
         x, states = self.gru(x, initial_state=states, training=training)
         x = self.dense(x, training=training)
+        x = self.dense_out(x, training=training)
 
         if return_state:
             return x, states
