@@ -18,7 +18,7 @@ def gen_expanding_window_seq(raw_seq):
     return seq_x, seq_y
 
 
-def get_tokenized_sequences(bucket, char_level: bool = False):
+def get_tokenized_sequences(bucket, char_level: bool = False, use_expanding_window: bool = True):
     tokenizer = tf.keras.preprocessing.text.Tokenizer(
         num_words=None,
         filters="",
@@ -53,8 +53,12 @@ def get_tokenized_sequences(bucket, char_level: bool = False):
 
     logging.info(f"Vocab size: {vocab_size}")
 
-    train_seq_x, train_seq_y = gen_expanding_window_seq(raw_seq_train)
-    val_seq_x, val_seq_y = gen_expanding_window_seq(raw_seq_val)
+    if use_expanding_window:
+        train_seq_x, train_seq_y = gen_expanding_window_seq(raw_seq_train)
+        val_seq_x, val_seq_y = gen_expanding_window_seq(raw_seq_val)
+    else:
+        train_seq_x, train_seq_y = [seq[:-1] for seq in raw_seq_train], [seq[1:] for seq in raw_seq_train]
+        val_seq_x, val_seq_y = [seq[:-1] for seq in raw_seq_val], [seq[1:] for seq in raw_seq_val]
 
     # padding
     train_seq_x = tf.keras.preprocessing.sequence.pad_sequences(

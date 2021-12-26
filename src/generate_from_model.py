@@ -16,7 +16,7 @@ args, _ = parser.parse_known_args()
 
 
 def infuse_temperature(predictions, temperature):
-    logits = np.log(predictions) / temperature
+    logits = np.log(predictions + 1e-9) / temperature
     return np.exp(logits) / np.sum(np.exp(logits))
 
 
@@ -28,7 +28,7 @@ def generate_from_model(
     for _ in range(length):
         tokenized_input = tokenizer.texts_to_sequences([result_tokens])
         prediction = model.predict(tokenized_input, verbose=0)[0]
-        predictions = infuse_temperature(prediction, temperature)
+        prediction = infuse_temperature(prediction, temperature)
 
         next_index = np.random.choice(
             np.arange(prediction.shape[0]), p=prediction, size=1
