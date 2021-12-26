@@ -35,7 +35,9 @@ def generate_from_model(model, ids_from_words, seed: str, n_pred=20, temperature
         seed_ids = ids_from_words(tf.strings.split(seed, sep=" "))
         seed_ids = tf.expand_dims(seed_ids, 0)
 
-        prediction, states = model(seed_ids, training=False, states=states, return_state=True)
+        prediction, states = model(
+            seed_ids, training=False, states=states, return_state=True
+        )
         probas = prediction[0, -1, :].numpy().ravel()
         probas = np.exp(probas / temperature) / np.sum(np.exp(probas / temperature))
 
@@ -66,7 +68,6 @@ def main():
         )
     )
 
-    
 
 if __name__ == "__main__":
     main()

@@ -70,25 +70,25 @@ model = get_sequence_model(config=config, vocabulary=vocabulary)
 print("Compiled model")
 
 #%%
-MIN_LR = 0.00005
-MAX_LR = 0.01
-N_EPOCHS = 20
+# MIN_LR = 0.0001
+# MAX_LR = 0.01
+# N_EPOCHS = 20
 
-decay_rate = (MIN_LR / MAX_LR) ** (1 / N_EPOCHS)
+# decay_rate = (MIN_LR / MAX_LR) ** (1 / N_EPOCHS)
 
-lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=MAX_LR,
-    decay_rate=decay_rate,
-    decay_steps=np.ceil(len(train) / config["training"].get("batch_size")),
-)
+# lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+#     initial_learning_rate=MAX_LR,
+#     decay_rate=decay_rate,
+#     decay_steps=np.ceil(len(train) / config["training"].get("batch_size")),
+# )
 
-loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
+# loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
 
-model.compile(
-    tf.keras.optimizers.Adam(learning_rate=lr_schedule),
-    loss=loss,
-    metrics=["accuracy"],
-)
+# model.compile(
+#     tf.keras.optimizers.Adam(learning_rate=lr_schedule),
+#     loss=loss,
+#     metrics=["accuracy"],
+# )
 
 #%%
 model.fit(
@@ -98,13 +98,17 @@ model.fit(
 )
 
 #%%
-def generate_from_model(seed: str, n_pred=10, temperature=1.0):
+def generate_from_model(model, ids_from_words, seed: str, n_pred=20, temperature=1.0):
+
+    states = None
 
     for _ in range(n_pred):
         seed_ids = ids_from_words(tf.strings.split(seed, sep=" "))
         seed_ids = tf.expand_dims(seed_ids, 0)
 
-        prediction = model(seed_ids, training=False)
+        prediction, states = model(
+            seed_ids, training=False, states=states, return_state=True
+        )
         probas = prediction[0, -1, :].numpy().ravel()
         probas = np.exp(probas / temperature) / np.sum(np.exp(probas / temperature))
 
