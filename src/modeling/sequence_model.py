@@ -8,7 +8,7 @@ import yaml
 import numpy as np
 import io
 from model_definition import get_sequence_model
-import json
+import joblib
 
 #%%
 # ------------------------- Downloading and initializing -------------------------
@@ -52,11 +52,11 @@ chars_from_ids = tf.keras.layers.StringLookup(
     vocabulary=list(vocabulary), mask_token=None, invert=True
 )
 
-# with io.BytesIO() as f:
-#     # joblib.dump(list(vocabulary), f)
-#     json.dump((ids_from_chars.get_config(), f)
-#     f.seek(0)
-#     bucket.upload_fileobj(f, "artifacts/string_lookup.json")
+with io.BytesIO() as f:
+    # joblib.dump(list(vocabulary), f)
+    joblib.dump(ids_from_chars.get_config(), f)
+    f.seek(0)
+    bucket.upload_fileobj(f, "artifacts/stringlookup_config.joblib")
 
 #%%
 # ------------------------- Data preparation & Model init -------------------------
@@ -65,6 +65,7 @@ ids_val = ids_from_chars(chars_val).to_tensor(shape=(chars_val.shape[0], 1000))
 
 train = tf.data.Dataset.from_tensor_slices((ids_train, ids_train))
 val = tf.data.Dataset.from_tensor_slices((ids_val, ids_val))
+
 
 train = train.map(lambda x, y: (x[:-1], y[1:])).shuffle(1024).prefetch(1024)
 val = val.map(lambda x, y: (x[:-1], y[1:])).shuffle(1024).prefetch(1024)

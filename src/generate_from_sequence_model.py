@@ -47,20 +47,18 @@ def generate_from_model(model, ids_from_chars, seed: str, n_pred=100, temperatur
 
 def main():
     with io.BytesIO() as f:
-        bucket.download_fileobj("artifacts/vocabulary_sequence.pkl", f)
+        bucket.download_fileobj("artifacts/stringlookup_config.joblib", f)
         f.seek(0)
-        vocabulary = joblib.load(f)
+        ids_from_words = tf.keras.layers.StringLookup.from_config(joblib.load(f))
+
 
     with open("artifacts/model2_sequence.h5", "wb") as f:
         bucket.download_fileobj("artifacts/model2_sequence.h5", f)
-        model = get_sequence_model(config, vocabulary)
+        model = get_sequence_model(config, ids_from_words.get_vocabulary())
 
     model(tf.convert_to_tensor([[1,2,3]]))
     model.load_weights("artifacts/model2_sequence.h5")
 
-    ids_from_words = tf.keras.layers.StringLookup(
-        vocabulary=list(vocabulary), mask_token=None
-    )
 
     print(
         generate_from_model(

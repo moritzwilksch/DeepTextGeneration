@@ -35,9 +35,6 @@ def get_model(
 class MyModel(tf.keras.Model):
     def __init__(self, vocabulary, embedding_dim, rnn_units, dropout, dense_dim):
         super().__init__(self)
-        self.ids_from_chars = tf.keras.layers.StringLookup(
-            vocabulary=list(vocabulary), mask_token=None
-        )
 
         self.embedding = tf.keras.layers.Embedding(
             len(vocabulary) + 1, embedding_dim, mask_zero=True
