@@ -19,7 +19,9 @@ recipes = pd.read_json("data/recipes.json")["Instructions"].tolist()
 
 #%%
 def to_tokens(text: str):
-    return [REGEX_DIGIT.sub("<#>", token.lower()) for token in nltk.word_tokenize(text)]
+    text = text.replace(".", " . ")
+    tokens = nltk.word_tokenize(text, language="german")
+    return [REGEX_DIGIT.sub("<#>", token.lower()) for token in tokens]
 
 
 corpus = joblib.Parallel(n_jobs=-1)(

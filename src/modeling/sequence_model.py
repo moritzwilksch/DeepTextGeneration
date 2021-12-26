@@ -86,6 +86,7 @@ class MyModel(tf.keras.Model):
             states = self.gru.get_initial_state(x)
         x, states = self.gru(x, initial_state=states, training=training)
         x = self.dense(x, training=training)
+        x = self.dropout(x, training=training)
         x = self.dense_out(x, training=training)
 
         if return_state:
@@ -105,7 +106,7 @@ model = MyModel(
 
 loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
 model.compile(
-    tf.keras.optimizers.Adam(lr=config["training"].get("learning_rate")),
+    tf.keras.optimizers.Adam(learning_rate=config["training"].get("learning_rate")),
     loss=loss,
     metrics=["accuracy"],
 )
@@ -123,7 +124,7 @@ model.fit(
 )
 
 #%%
-def generate_from_model(seed: str, n_pred=10):
+def generate_from_model(seed: str, n_pred=10, temperature=1.0):
 
     for _ in range(n_pred):
         seed_ids = ids_from_words(tf.strings.split(seed, sep=" "))
@@ -131,13 +132,13 @@ def generate_from_model(seed: str, n_pred=10):
 
         prediction = model(seed_ids, training=False)
         probas = prediction[0, -1, :].numpy().ravel()
-        probas = np.exp(probas) / np.sum(np.exp(probas))
+        probas = np.exp(probas / temperature) / np.sum(np.exp(probas / temperature))
 
         prediction = np.random.choice(ids_from_words.get_vocabulary()[1:], p=probas)
 
-        seed = seed + " " + prediction.numpy().ravel()[0].decode("utf-8")
+        seed = seed + " " + prediction
 
     return seed
 
 
-generate_from_model("zuerst hähnchen")
+generate_from_model("zuerst hähnchen", temperature=0.5)
