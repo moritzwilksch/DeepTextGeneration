@@ -35,8 +35,17 @@ with io.BytesIO() as f:
 
 #%%
 vocabulary = set()
-for doc in tweets_train:
-    vocabulary.update(set(doc.split()))
+
+
+chars_train = tf.strings.unicode_split(tweets_train, input_encoding='UTF-8')
+chars_val = tf.strings.unicode_split(tweets_val, input_encoding='UTF-8')
+
+for doc in chars_train:
+    vocabulary.update(set(doc.numpy().tolist()))
+
+
+# for doc in tweets_train:
+#     vocabulary.update(set(doc.split()))
 
 ids_from_words = tf.keras.layers.StringLookup(
     vocabulary=list(vocabulary), mask_token=None
@@ -52,11 +61,15 @@ with io.BytesIO() as f:
     bucket.upload_fileobj(f, "artifacts/vocabulary_sequence.pkl")
 
 #%%
-words_train = tf.strings.split(tweets_train, sep=" ")
-words_val = tf.strings.split(tweets_val, sep=" ")
+# words_train = tf.strings.split(tweets_train, sep=" ")
+# words_val = tf.strings.split(tweets_val, sep=" ")
 
-ids_train = ids_from_words(words_train).to_tensor(shape=(words_train.shape[0], 75))
-ids_val = ids_from_words(words_val).to_tensor(shape=(words_val.shape[0], 75))
+words_train = chars_train
+words_val = chars_val
+
+ids_train = ids_from_words(words_train).to_tensor(shape=(words_train.shape[0], 1000))
+ids_val = ids_from_words(words_val).to_tensor(shape=(words_val.shape[0], 1000))
+
 
 
 train = tf.data.Dataset.from_tensor_slices((ids_train, ids_train))

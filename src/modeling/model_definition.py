@@ -41,7 +41,7 @@ class MyModel(tf.keras.Model):
         )
         self.dropout = tf.keras.layers.Dropout(dropout)
         self.dense = tf.keras.layers.Dense(dense_dim, activation="relu")
-        self.dense_out = tf.keras.layers.Dense(vocab_size)
+        self.dense_out = tf.keras.layers.Dense(vocab_size + 1)
 
     def call(self, inputs, states=None, return_state=False, training=False):
         x = inputs
@@ -70,7 +70,7 @@ def get_sequence_model(config, vocabulary):
 
     loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
     model.compile(
-        tf.keras.optimizers.Adam(learning_rate=config["training"].get("learning_rate")),
+        tf.keras.optimizers.Adam(learning_rate=config["training"].get("learning_rate"), clipnorm=1.0),
         loss=loss,
         metrics=["accuracy"],
     )
