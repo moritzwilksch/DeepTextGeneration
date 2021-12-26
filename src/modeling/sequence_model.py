@@ -7,7 +7,7 @@ import logging
 import yaml
 import numpy as np
 import io
-from src.modeling.model_definition import get_sequence_model
+from model_definition import get_sequence_model
 import joblib
 
 #%%

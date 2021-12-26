@@ -35,7 +35,7 @@ def get_model(
 class MyModel(tf.keras.Model):
     def __init__(self, vocab_size, embedding_dim, rnn_units, dropout, dense_dim):
         super().__init__(self)
-        self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
+        self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim, mask_zero=True)
         self.gru = tf.keras.layers.GRU(
             rnn_units, return_sequences=True, return_state=True
         )

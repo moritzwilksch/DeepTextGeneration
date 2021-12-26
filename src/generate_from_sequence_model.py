@@ -7,7 +7,7 @@ import logging
 import yaml
 import numpy as np
 import io
-from src.modeling.model_definition import get_sequence_model
+from modeling.model_definition import get_sequence_model
 import joblib
 import tempfile
 
@@ -29,11 +29,13 @@ bucket = boto3.resource(
 
 def generate_from_model(model, ids_from_words, seed: str, n_pred=20, temperature=1.0):
 
+    states = None
+
     for _ in range(n_pred):
         seed_ids = ids_from_words(tf.strings.split(seed, sep=" "))
         seed_ids = tf.expand_dims(seed_ids, 0)
 
-        prediction = model(seed_ids, training=False)
+        prediction, states = model(seed_ids, training=False, states=states, return_state=True)
         probas = prediction[0, -1, :].numpy().ravel()
         probas = np.exp(probas / temperature) / np.sum(np.exp(probas / temperature))
 
@@ -64,6 +66,7 @@ def main():
         )
     )
 
+    
 
 if __name__ == "__main__":
     main()
