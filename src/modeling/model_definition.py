@@ -30,3 +30,49 @@ def get_model(
         metrics=["accuracy"],
     )
     return model
+
+
+class MyModel(tf.keras.Model):
+    def __init__(self, vocab_size, embedding_dim, rnn_units, dropout, dense_dim):
+        super().__init__(self)
+        self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
+        self.gru = tf.keras.layers.GRU(
+            rnn_units, return_sequences=True, return_state=True
+        )
+        self.dropout = tf.keras.layers.Dropout(dropout)
+        self.dense = tf.keras.layers.Dense(dense_dim, activation="relu")
+        self.dense_out = tf.keras.layers.Dense(vocab_size)
+
+    def call(self, inputs, states=None, return_state=False, training=False):
+        x = inputs
+        x = self.embedding(x, training=training)
+        if states is None:
+            states = self.gru.get_initial_state(x)
+        x, states = self.gru(x, initial_state=states, training=training)
+        x = self.dense(x, training=training)
+        x = self.dropout(x, training=training)
+        x = self.dense_out(x, training=training)
+
+        if return_state:
+            return x, states
+        else:
+            return x
+
+
+def get_sequence_model(config, vocabulary):
+    model = MyModel(
+        vocab_size=len(vocabulary),
+        embedding_dim=config["architecture"].get("embedding_dim"),
+        rnn_units=config["architecture"].get("gru_dim"),
+        dropout=config["architecture"].get("dropout"),
+        dense_dim=config["architecture"].get("dense_dim"),
+    )
+
+    loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
+    model.compile(
+        tf.keras.optimizers.Adam(learning_rate=config["training"].get("learning_rate")),
+        loss=loss,
+        metrics=["accuracy"],
+    )
+
+    return model

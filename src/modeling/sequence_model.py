@@ -7,6 +7,8 @@ import logging
 import yaml
 import numpy as np
 import io
+from src.modeling.model_definition import get_sequence_model
+import joblib
 
 #%%
 with open("src/modeling/modelconfig.yaml") as f:
@@ -44,6 +46,10 @@ words_from_ids = tf.keras.layers.StringLookup(
     vocabulary=list(vocabulary), mask_token=None, invert=True
 )
 
+with io.BytesIO() as f:
+    joblib.dump(vocabulary, f)
+    f.seek(0)
+    bucket.upload_fileobj(f, "artifacts/vocabulary_sequence.pkl")
 
 #%%
 words_train = tf.strings.split(tweets_train, sep=" ")
@@ -60,60 +66,9 @@ train = train.map(lambda x, y: (x[:-1], y[1:])).shuffle(1024).prefetch(1024)
 val = val.map(lambda x, y: (x[:-1], y[1:])).shuffle(1024).prefetch(1024)
 
 
-#%%
-# with open("artifacts/word_tokenizer.json", "w") as f:
-#     f.write(tokenizer.to_json())
-#     bucket.upload_file("artifacts/word_tokenizer.json", "artifacts/word_tokenizer.json")
-
-# create tf data set
-
-#%%
-class MyModel(tf.keras.Model):
-    def __init__(self, vocab_size, embedding_dim, rnn_units, dropout, dense_dim):
-        super().__init__(self)
-        self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
-        self.gru = tf.keras.layers.GRU(
-            rnn_units, return_sequences=True, return_state=True
-        )
-        self.dropout = tf.keras.layers.Dropout(dropout)
-        self.dense = tf.keras.layers.Dense(dense_dim, activation="relu")
-        self.dense_out = tf.keras.layers.Dense(vocab_size)
-
-    def call(self, inputs, states=None, return_state=False, training=False):
-        x = inputs
-        x = self.embedding(x, training=training)
-        if states is None:
-            states = self.gru.get_initial_state(x)
-        x, states = self.gru(x, initial_state=states, training=training)
-        x = self.dense(x, training=training)
-        x = self.dropout(x, training=training)
-        x = self.dense_out(x, training=training)
-
-        if return_state:
-            return x, states
-        else:
-            return x
-
-
-model = MyModel(
-    vocab_size=len(vocabulary),
-    embedding_dim=config["architecture"].get("embedding_dim"),
-    rnn_units=config["architecture"].get("gru_dim"),
-    dropout=config["architecture"].get("dropout"),
-    dense_dim=config["architecture"].get("dense_dim"),
-)
-
-
-loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
-model.compile(
-    tf.keras.optimizers.Adam(learning_rate=config["training"].get("learning_rate")),
-    loss=loss,
-    metrics=["accuracy"],
-)
-
+model = get_sequence_model(config=config, vocabulary=vocabulary)
 print("Compiled model")
 
-#%%
 
 
 #%%
@@ -141,4 +96,9 @@ def generate_from_model(seed: str, n_pred=10, temperature=1.0):
     return seed
 
 
-generate_from_model("zuerst hähnchen", temperature=0.5)
+generate_from_model("zuerst hähnchen", temperature=0.8)
+
+#%%
+model.save_weights("artifacts/model2_sequence.h5")
+bucket.upload_file("artifacts/model2_sequence.h5", "artifacts/model2_sequence.h5")
+logging.info("Saved model weights.")
