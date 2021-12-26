@@ -13,7 +13,7 @@ word:
 # Word-based model - SEQUENCE
 word_sequence:
   architecture:
-    embedding_dim: 128
+    embedding_dim: 32
     gru_dim: 256
     dense_dim: 128
     dropout: 0.25 

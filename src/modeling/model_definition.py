@@ -33,15 +33,21 @@ def get_model(
 
 
 class MyModel(tf.keras.Model):
-    def __init__(self, vocab_size, embedding_dim, rnn_units, dropout, dense_dim):
+    def __init__(self, vocabulary, embedding_dim, rnn_units, dropout, dense_dim):
         super().__init__(self)
-        self.embedding = tf.keras.layers.Embedding(vocab_size + 1, embedding_dim, mask_zero=True)
+        self.ids_from_chars = tf.keras.layers.StringLookup(
+            vocabulary=list(vocabulary), mask_token=None
+        )
+
+        self.embedding = tf.keras.layers.Embedding(
+            len(vocabulary) + 1, embedding_dim, mask_zero=True
+        )
         self.gru = tf.keras.layers.GRU(
             rnn_units, return_sequences=True, return_state=True
         )
         self.dropout = tf.keras.layers.Dropout(dropout)
         self.dense = tf.keras.layers.Dense(dense_dim, activation="relu")
-        self.dense_out = tf.keras.layers.Dense(vocab_size + 1)
+        self.dense_out = tf.keras.layers.Dense(len(vocabulary) + 1)
 
     def call(self, inputs, states=None, return_state=False, training=False):
         x = inputs
@@ -61,7 +67,7 @@ class MyModel(tf.keras.Model):
 
 def get_sequence_model(config, vocabulary):
     model = MyModel(
-        vocab_size=len(vocabulary),
+        vocabulary=vocabulary,
         embedding_dim=config["architecture"].get("embedding_dim"),
         rnn_units=config["architecture"].get("gru_dim"),
         dropout=config["architecture"].get("dropout"),
@@ -70,7 +76,9 @@ def get_sequence_model(config, vocabulary):
 
     loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
     model.compile(
-        tf.keras.optimizers.Adam(learning_rate=config["training"].get("learning_rate"), clipnorm=1.0),
+        tf.keras.optimizers.Adam(
+            learning_rate=config["training"].get("learning_rate"), clipnorm=1.0
+        ),
         loss=loss,
         metrics=["accuracy"],
     )

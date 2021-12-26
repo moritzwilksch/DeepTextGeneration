@@ -63,7 +63,7 @@ class LRFinder:
         )
 
         self.model.fit(dataset, epochs=epochs, callbacks=[callback], **kw_fit)
-        self.model.set_weights(initial_weights)
+        # self.model.set_weights(initial_weights)
 
         K.set_value(self.model.optimizer.lr, original_lr)
 
