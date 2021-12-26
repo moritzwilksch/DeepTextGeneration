@@ -96,7 +96,7 @@ def generate_from_model(seed: str, n_pred=10, temperature=1.0):
     return seed
 
 
-generate_from_model("zuerst hähnchen", temperature=0.8)
+print(generate_from_model("zuerst hähnchen", temperature=0.8))
 
 #%%
 model.save_weights("artifacts/model2_sequence.h5")
