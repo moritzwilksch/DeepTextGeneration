@@ -26,7 +26,7 @@ def get_model(
     model.add(tf.keras.layers.Dense(vocab_size, activation="softmax"))
     model.compile(
         loss="sparse_categorical_crossentropy",
-        optimizer=tf.keras.optimizers.Adam(learning_rate),
+        optimizer=tf.keras.optimizers.Adam(learning_rate, clipnorm=1.0),
         metrics=["accuracy"],
     )
     return model

@@ -93,12 +93,12 @@ print("Compiled model")
 #%%
 model.fit(
     train.batch(config["training"].get("batch_size")),
-    epochs=N_EPOCHS,
+    epochs=10,
     validation_data=val.batch(512),
 )
 
 #%%
-def generate_from_model(model, ids_from_words, seed: str, n_pred=20, temperature=1.0):
+def generate_from_model(seed: str, n_pred=20, temperature=1.0):
 
     states = None
 
@@ -107,7 +107,7 @@ def generate_from_model(model, ids_from_words, seed: str, n_pred=20, temperature
         seed_ids = tf.expand_dims(seed_ids, 0)
 
         prediction, states = model(
-            seed_ids, training=False, states=states, return_state=True
+            seed_ids, training=False, states=None, return_state=True
         )
         probas = prediction[0, -1, :].numpy().ravel()
         probas = np.exp(probas / temperature) / np.sum(np.exp(probas / temperature))
