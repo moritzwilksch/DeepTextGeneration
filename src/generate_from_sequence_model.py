@@ -43,25 +43,25 @@ def generate_from_model(model, ids_from_chars, seed: str, n_pred=100, temperatur
 
     return seed
 
-
+#%%
 if __name__ == "__main__":
 
     with io.BytesIO() as f:
         bucket.download_fileobj("artifacts/stringlookup_config.joblib", f)
         f.seek(0)
-        ids_from_words = tf.keras.layers.StringLookup.from_config(joblib.load(f))
+        ids_from_chars = tf.keras.layers.StringLookup.from_config(joblib.load(f))
 
     with open("artifacts/model2_sequence.h5", "wb") as f:
         bucket.download_fileobj("artifacts/model2_sequence.h5", f)
         model = get_sequence_model(
-            config, ids_from_words.get_vocabulary()[1:]
+            config, ids_from_chars.get_vocabulary()[1:]
         )  # skip [UNK] token!
 
-    model(tf.convert_to_tensor([[1, 2, 3]]))
+    model(tf.convert_to_tensor([[1, 2, 3]]))  # builds the model
     model.load_weights("artifacts/model2_sequence.h5")
 
     print(
         generate_from_model(
-            model, ids_from_words, "zuerst hähnchen", temperature=0.7, n_pred=250
+            model, ids_from_chars, "zuerst hähnchen", temperature=0.7, n_pred=250
         )
     )
