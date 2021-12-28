@@ -5,7 +5,7 @@
 - [x] implement word-based model
 - [x] implement char-based model
 - [x] try exponential LR decay 
-- [ ] try subword tokenizer
+- [x] try subword tokenizer
 - [x] implement temperature
 - [ ] try [keras mini GPT example](https://keras.io/examples/generative/text_generation_with_miniature_gpt/)
 - [x] use [German recipes](https://www.kaggle.com/sterby/german-recipes-dataset) data set for more standardized corpus
@@ -31,5 +31,6 @@ WIP.
 - character-based model outperforms word-based model with similar training time (char-based model has 1/10th of the parameters)
   - word-based accuracy: ~50%, no coherent sentences.
   - char-based accuracy: ~80%, mostly coherent text
+- sub-word based models (BertTokenizer with vocab size 1000) outperforms the character-based model (accuracy 40-50% but more coherent text)
 - the model only works as a real RNN Seq2Seq model ([link](https://www.tensorflow.org/text/tutorials/text_generation)), not when manipulating the data set to simulate an expanding window sequence.
 - mixed precision training yields a `45%` speed-up with only a slight reduction in accuracy (77% vs 76% after 20 epochs) on a NVIDIA Tesla T4 GPU

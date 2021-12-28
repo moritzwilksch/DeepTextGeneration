@@ -9,6 +9,8 @@ import numpy as np
 import io
 import joblib
 
+tf.keras.mixed_precision.set_global_policy("mixed_float16")
+
 #%%
 # ------------------------- Downloading and initializing -------------------------
 with open("src/modeling/modelconfig.yaml") as f:
@@ -43,8 +45,8 @@ train = tf.data.Dataset.from_tensor_slices((documents_train, documents_train))
 val = tf.data.Dataset.from_tensor_slices((documents_val, documents_val))
 
 
-RECREATE_VOCAB = True
-VOCAB_SIZE = 250
+RECREATE_VOCAB = False
+VOCAB_SIZE = 1000
 bert_tokenizer_params = dict(lower_case=True)
 
 if RECREATE_VOCAB:
@@ -73,24 +75,16 @@ tokenizer = BertTokenizer("artifacts/bert_vocab.txt", **bert_tokenizer_params)
 BATCH_SIZE = config["training"].get("batch_size")
 PAD_TO = 500
 
-train_mapped = train.batch(BATCH_SIZE).map(
+train_mapped = train.padded_batch(BATCH_SIZE).map(
     lambda x, y: (
-        tokenizer.tokenize(x)[:, :-1, :]
-        .merge_dims(-2, -1)
-        .to_tensor(shape=(None, PAD_TO)),
-        tokenizer.tokenize(y)[:, 1:, :]
-        .merge_dims(-2, -1)
-        .to_tensor(shape=(None, PAD_TO)),
+        tokenizer.tokenize(x)[:, :-1].merge_dims(-2, -1).to_tensor(),
+        tokenizer.tokenize(y)[:, 1:].merge_dims(-2, -1).to_tensor(),
     )
 )
-val_mapped = val.batch(BATCH_SIZE).map(
+val_mapped = val.padded_batch(BATCH_SIZE).map(
     lambda x, y: (
-        tokenizer.tokenize(x)[:, :-1, :]
-        .merge_dims(-2, -1)
-        .to_tensor(shape=(None, PAD_TO)),
-        tokenizer.tokenize(y)[:, 1:, :]
-        .merge_dims(-2, -1)
-        .to_tensor(shape=(None, PAD_TO)),
+        tokenizer.tokenize(x)[:, :-1].merge_dims(-2, -1).to_tensor(),
+        tokenizer.tokenize(y)[:, 1:].merge_dims(-2, -1).to_tensor(),
     )
 )
 
@@ -110,7 +104,7 @@ class MyModel(tf.keras.Model):
         )
         self.dropout = tf.keras.layers.Dropout(dropout)
         self.dense = tf.keras.layers.Dense(dense_dim, activation="relu")
-        self.dense_out = tf.keras.layers.Dense(len(vocabulary) + 1)
+        self.dense_out = tf.keras.layers.Dense(len(vocabulary) + 1, dtype="float32")
 
     def call(self, inputs, states=None, return_state=False, training=False):
         x = inputs
