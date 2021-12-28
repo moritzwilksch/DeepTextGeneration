@@ -43,21 +43,16 @@ train = tf.data.Dataset.from_tensor_slices((documents_train, documents_train))
 val = tf.data.Dataset.from_tensor_slices((documents_val, documents_val))
 
 
-RECREATE_VOCAB = False
+RECREATE_VOCAB = True
 bert_tokenizer_params = dict(lower_case=True)
 
 if RECREATE_VOCAB:
     reserved_tokens = ["[PAD]", "[UNK]", "[START]", "[END]"]
 
     bert_vocab_args = dict(
-        # The target vocabulary size
-        vocab_size=1000,
-        # Reserved tokens that must be included in the vocabulary
+        vocab_size=250,
         reserved_tokens=reserved_tokens,
-        # Arguments for `text.BertTokenizer`
         bert_tokenizer_params=bert_tokenizer_params,
-        # Arguments for `wordpiece_vocab.wordpiece_tokenizer_learner_lib.learn`
-        learn_params={},
     )
 
     def write_vocab_file(filepath, vocab):
@@ -157,7 +152,10 @@ def generate_from_model(seed: str, n_pred=100, temperature=0.7):
         # seed_ids = tf.expand_dims(seed_ids, 0)
 
         prediction, state = model(
-            tf.convert_to_tensor(seed_ids), training=False, states=None, return_state=True
+            tf.convert_to_tensor(seed_ids)[None, :],
+            training=False,
+            states=None,
+            return_state=True,
         )
         probas = prediction[0, -1, :].numpy().ravel()
         probas = np.exp(probas / temperature) / np.sum(np.exp(probas / temperature))
@@ -165,7 +163,8 @@ def generate_from_model(seed: str, n_pred=100, temperature=0.7):
         seed_ids = np.hstack([seed_ids, prediction.ravel()])
 
         # break
-    return tokenizer.detokenize(seed_ids)
+    prediction_tensor = tokenizer.detokenize(seed_ids[None, :])
+    return " ".join(x.decode("utf-8") for x in prediction_tensor.numpy().ravel())
 
 
 ret = generate_from_model("zuerst hähnchen")
