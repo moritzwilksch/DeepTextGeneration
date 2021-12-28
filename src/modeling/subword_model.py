@@ -12,7 +12,7 @@ import joblib
 #%%
 # ------------------------- Downloading and initializing -------------------------
 with open("src/modeling/modelconfig.yaml") as f:
-    config = yaml.safe_load(f)["word_sequence"]
+    config = yaml.safe_load(f)["subword_sequence"]
 
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
@@ -44,13 +44,14 @@ val = tf.data.Dataset.from_tensor_slices((documents_val, documents_val))
 
 
 RECREATE_VOCAB = True
+VOCAB_SIZE = 250
 bert_tokenizer_params = dict(lower_case=True)
 
 if RECREATE_VOCAB:
     reserved_tokens = ["[PAD]", "[UNK]", "[START]", "[END]"]
 
     bert_vocab_args = dict(
-        vocab_size=250,
+        vocab_size=VOCAB_SIZE,
         reserved_tokens=reserved_tokens,
         bert_tokenizer_params=bert_tokenizer_params,
     )
@@ -61,7 +62,7 @@ if RECREATE_VOCAB:
                 print(token, file=f)
 
     vocab = bert_vocab.bert_vocab_from_dataset(
-        train.batch(1000).prefetch(2), **bert_vocab_args
+        train.map(lambda x, y: x), **bert_vocab_args
     )
     write_vocab_file("artifacts/bert_vocab.txt", vocab)
 
@@ -70,16 +71,26 @@ tokenizer = BertTokenizer("artifacts/bert_vocab.txt", **bert_tokenizer_params)
 
 #%%
 BATCH_SIZE = config["training"].get("batch_size")
+PAD_TO = 500
+
 train_mapped = train.batch(BATCH_SIZE).map(
     lambda x, y: (
-        tokenizer.tokenize(x)[:, :-1, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)),
-        tokenizer.tokenize(y)[:, 1:, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)),
+        tokenizer.tokenize(x)[:, :-1, :]
+        .merge_dims(-2, -1)
+        .to_tensor(shape=(None, PAD_TO)),
+        tokenizer.tokenize(y)[:, 1:, :]
+        .merge_dims(-2, -1)
+        .to_tensor(shape=(None, PAD_TO)),
     )
 )
 val_mapped = val.batch(BATCH_SIZE).map(
     lambda x, y: (
-        tokenizer.tokenize(x)[:, :-1, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)),
-        tokenizer.tokenize(y)[:, 1:, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)),
+        tokenizer.tokenize(x)[:, :-1, :]
+        .merge_dims(-2, -1)
+        .to_tensor(shape=(None, PAD_TO)),
+        tokenizer.tokenize(y)[:, 1:, :]
+        .merge_dims(-2, -1)
+        .to_tensor(shape=(None, PAD_TO)),
     )
 )
 

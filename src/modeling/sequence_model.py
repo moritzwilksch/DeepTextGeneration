@@ -13,7 +13,7 @@ import joblib
 #%%
 # ------------------------- Downloading and initializing -------------------------
 with open("src/modeling/modelconfig.yaml") as f:
-    config = yaml.safe_load(f)["word_sequence"]
+    config = yaml.safe_load(f)["char_sequence"]
 
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
