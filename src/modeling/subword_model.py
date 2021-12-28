@@ -75,18 +75,20 @@ tokenizer = BertTokenizer("artifacts/bert_vocab.txt", **bert_tokenizer_params)
 BATCH_SIZE = config["training"].get("batch_size")
 PAD_TO = 500
 
-train_mapped = train.padded_batch(BATCH_SIZE).map(
+train_mapped = train.map(
     lambda x, y: (
-        tokenizer.tokenize(x)[:, :-1].merge_dims(-2, -1).to_tensor(),
-        tokenizer.tokenize(y)[:, 1:].merge_dims(-2, -1).to_tensor(),
+        tf.reshape(tokenizer.tokenize(x).merge_dims(-2, -1).to_tensor()[:, :-1], (-1,)),
+        tf.reshape(tokenizer.tokenize(y).merge_dims(-2, -1).to_tensor()[:, 1:], (-1,)),
+        # tf.reshape(tokenizer.tokenize(y)[:, 1:].merge_dims(-2, -1).to_tensor(), (-1, )),
     )
-)
-val_mapped = val.padded_batch(BATCH_SIZE).map(
+).padded_batch(BATCH_SIZE)
+val_mapped = val.map(
     lambda x, y: (
-        tokenizer.tokenize(x)[:, :-1].merge_dims(-2, -1).to_tensor(),
-        tokenizer.tokenize(y)[:, 1:].merge_dims(-2, -1).to_tensor(),
+        tf.reshape(tokenizer.tokenize(x).merge_dims(-2, -1).to_tensor()[:, :-1], (-1,)),
+        tf.reshape(tokenizer.tokenize(y).merge_dims(-2, -1).to_tensor()[:, 1:], (-1,)),
+        # tf.reshape(tokenizer.tokenize(y)[:, 1:].merge_dims(-2, -1).to_tensor(), (-1, )),
     )
-)
+).padded_batch(BATCH_SIZE)
 
 #%%
 with open("artifacts/bert_vocab.txt", "r") as f:
