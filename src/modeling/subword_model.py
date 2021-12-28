@@ -75,8 +75,18 @@ tokenizer = BertTokenizer("artifacts/bert_vocab.txt", **bert_tokenizer_params)
 
 #%%
 BATCH_SIZE = config["training"].get("batch_size")
-train_mapped = train.batch(BATCH_SIZE).map(lambda x, y: (tokenizer.tokenize(x)[:, :-1, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)), tokenizer.tokenize(y)[:, 1:, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000))))
-val_mapped = val.batch(BATCH_SIZE).map(lambda x, y: (tokenizer.tokenize(x)[:, :-1, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)), tokenizer.tokenize(y)[:, 1:, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000))))
+train_mapped = train.batch(BATCH_SIZE).map(
+    lambda x, y: (
+        tokenizer.tokenize(x)[:, :-1, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)),
+        tokenizer.tokenize(y)[:, 1:, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)),
+    )
+)
+val_mapped = val.batch(BATCH_SIZE).map(
+    lambda x, y: (
+        tokenizer.tokenize(x)[:, :-1, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)),
+        tokenizer.tokenize(y)[:, 1:, :].merge_dims(-2, -1).to_tensor(shape=(None, 1000)),
+    )
+)
 
 #%%
 with open("artifacts/bert_vocab.txt", "r") as f:
@@ -111,6 +121,7 @@ class MyModel(tf.keras.Model):
         else:
             return x
 
+
 def get_sequence_model(config, vocabulary):
     model = MyModel(
         vocabulary=vocabulary,
@@ -135,28 +146,26 @@ def get_sequence_model(config, vocabulary):
 #%%
 model = get_sequence_model(config, vocabulary)
 model.fit(
-    train_mapped,
-    epochs=10,
-    validation_data=val_mapped,
+    train_mapped, epochs=10, validation_data=val_mapped,
 )
 
 #%%
 def generate_from_model(seed: str, n_pred=100, temperature=0.7):
+    seed_ids = tokenizer.tokenize(seed).merge_dims(-2, -1).to_tensor().numpy().ravel()
     for _ in range(n_pred):
-        seed_ids = tokenizer.tokenize(seed).merge_dims(-2, -1).to_tensor()
         # print(seed_ids)
         # seed_ids = tf.expand_dims(seed_ids, 0)
 
         prediction, state = model(
-            seed_ids, training=False, states=None, return_state=True
+            tf.convert_to_tensor(seed_ids), training=False, states=None, return_state=True
         )
         probas = prediction[0, -1, :].numpy().ravel()
         probas = np.exp(probas / temperature) / np.sum(np.exp(probas / temperature))
-        prediction = np.random.choice(np.arange(0, len(vocabulary)+1), p=probas)
-        # print(tokenizer.detokenize(tf.convert_to_tensor([[prediction]]))[0])
-        seed = seed + "" + tokenizer.detokenize(tf.convert_to_tensor([[prediction]]))[0]
-        seed = seed[0].numpy().decode("utf-8")
-        #break
-    return seed_ids
+        prediction = np.random.choice(np.arange(0, len(vocabulary) + 1), p=probas)
+        seed_ids = np.hstack([seed_ids, prediction.ravel()])
+
+        # break
+    return tokenizer.detokenize(seed_ids)
+
 
 ret = generate_from_model("zuerst hähnchen")
