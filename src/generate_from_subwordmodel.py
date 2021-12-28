@@ -9,7 +9,7 @@ import numpy as np
 import io
 import joblib
 
-tf.keras.mixed_precision.set_global_policy("mixed_float16")
+
 
 #%%
 # ------------------------- Downloading and initializing -------------------------
@@ -26,75 +26,18 @@ bucket = boto3.resource(
 ).Bucket("deep-text-generation")
 
 
-with io.BytesIO() as f:
-    bucket.download_fileobj("data/recipe_corpus.txt", f)
-    f.seek(0)
-    corpus = f.readlines()
-
-    documents = [line.decode("utf-8").strip() for line in corpus]
-    documents_train, documents_val = train_test_split(
-        documents, test_size=0.2, random_state=42
-    )
 
 #%%
 # ------------------------- Vocabulary Init -------------------------
 from tensorflow_text.tools.wordpiece_vocab import bert_vocab_from_dataset as bert_vocab
 from tensorflow_text import BertTokenizer
 
-train = tf.data.Dataset.from_tensor_slices((documents_train, documents_train))
-val = tf.data.Dataset.from_tensor_slices((documents_val, documents_val))
-
-
-RECREATE_VOCAB = False
-VOCAB_SIZE = 1000
-bert_tokenizer_params = dict(lower_case=True)
-
-if RECREATE_VOCAB:
-    reserved_tokens = ["[PAD]", "[UNK]", "[START]", "[END]"]
-
-    bert_vocab_args = dict(
-        vocab_size=VOCAB_SIZE,
-        reserved_tokens=reserved_tokens,
-        bert_tokenizer_params=bert_tokenizer_params,
-    )
-
-    def write_vocab_file(filepath, vocab):
-        with open(filepath, "w") as f:
-            for token in vocab:
-                print(token, file=f)
-
-    vocab = bert_vocab.bert_vocab_from_dataset(
-        train.map(lambda x, y: x), **bert_vocab_args
-    )
-    write_vocab_file("artifacts/bert_vocab.txt", vocab)
-    bucket.upload_file("artifacts/bert_vocab.txt", "artifacts/bert_vocab.txt")
-    logging.info("Uploaded artifacts/bert_vocab.txt")
-
-
-tokenizer = BertTokenizer("artifacts/bert_vocab.txt", **bert_tokenizer_params)
-
-#%%
-BATCH_SIZE = config["training"].get("batch_size")
-PAD_TO = 500
-
-train_mapped = train.map(
-    lambda x, y: (
-        tf.reshape(tokenizer.tokenize(x).merge_dims(-2, -1).to_tensor()[:, :-1], (-1,)),
-        tf.reshape(tokenizer.tokenize(y).merge_dims(-2, -1).to_tensor()[:, 1:], (-1,)),
-        # tf.reshape(tokenizer.tokenize(y)[:, 1:].merge_dims(-2, -1).to_tensor(), (-1, )),
-    )
-).padded_batch(BATCH_SIZE)
-val_mapped = val.map(
-    lambda x, y: (
-        tf.reshape(tokenizer.tokenize(x).merge_dims(-2, -1).to_tensor()[:, :-1], (-1,)),
-        tf.reshape(tokenizer.tokenize(y).merge_dims(-2, -1).to_tensor()[:, 1:], (-1,)),
-        # tf.reshape(tokenizer.tokenize(y)[:, 1:].merge_dims(-2, -1).to_tensor(), (-1, )),
-    )
-).padded_batch(BATCH_SIZE)
-
-#%%
 with open("artifacts/bert_vocab.txt", "r") as f:
     vocabulary = [line.strip("\n") for line in f.readlines()]
+
+bucket.download_file("artifacts/bert_vocab.txt", "artifacts/bert_vocab.txt")
+bert_tokenizer_params = dict(lower_case=True)
+tokenizer = BertTokenizer("artifacts/bert_vocab.txt", **bert_tokenizer_params)
 
 #%%
 class MyModel(tf.keras.Model):
@@ -149,9 +92,9 @@ def get_sequence_model(config, vocabulary):
 
 #%%
 model = get_sequence_model(config, vocabulary)
-model.fit(
-    train_mapped, epochs=10, validation_data=val_mapped,
-)
+bucket.download_file("artifacts/subword_model.h5", "artifacts/subword_model.h5")
+model(tf.random.uniform((1, 3)), training=False)
+model.load_weights("artifacts/subword_model.h5")
 
 #%%
 def generate_from_model(seed: str, n_pred=100, temperature=0.7):
@@ -176,9 +119,7 @@ def generate_from_model(seed: str, n_pred=100, temperature=0.7):
     return " ".join(x.decode("utf-8") for x in prediction_tensor.numpy().ravel())
 
 
-ret = generate_from_model("zuerst hähnchen")
-
 #%%
-model.save_weights("artifacts/subword_model.h5")
-bucket.upload_file("artifacts/subword_model.h5", "artifacts/subword_model.h5")
-logging.info("Saved model weights.")
+if __name__ == "__main__":
+    ret = generate_from_model("zuerst hähnchen")
+    print(ret)
