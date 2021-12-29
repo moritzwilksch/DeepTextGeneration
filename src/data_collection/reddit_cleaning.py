@@ -41,11 +41,18 @@ def lowercase(text: str) -> str:
 
 
 def strip_text(text: str) -> str:
+    text = text.replace("“", "")
+    text = text.replace('"', "")
+    text = text.replace("&gt;", "")
+
+    # a regex for markdown links
+    text = re.sub(r"\[([\w\s\d]+)\]\(((?:\/|https?:\/\/)[\w\d./?=#]+)\)", "", text)
+
     return text.strip()
 
 
 def remove_links(text: str) -> str:
-    return re.sub(r"https:\/\/[A-Za-z\d]+", "", text)
+    return re.sub(r"https?:\/\/[A-Za-z\d\.]+", "", text)
 
 
 def replace_numbers(text: str) -> str:
@@ -64,12 +71,31 @@ def process(text: str) -> str:
     text = strip_text(text)
     text = remove_links(text)
     text = replace_numbers(text)
-    # text = space_punctuation(text)
+    text = space_punctuation(text)
     return text
 
 
+def filtering(text: str) -> bool:
+    disallowed = [
+        "╔",
+        "**user report**",
+        "![",
+        "**total submissions**",
+        " | | | ",
+        "^[",
+        "i will be messaging you in ",
+        "i am a bot",
+    ]
+
+    return (
+        (len(text.split()) > 4)
+        and (not any(t in text for t in disallowed))
+        and not (text.startswith("**"))
+    )
+
+
 #%%
-clean_lines = ["<|START|>" + process(text) + "<|END|>" for text in lines]
+clean_lines = [process(text) for text in lines if filtering(text)]
 
 
 #%%
