@@ -11,6 +11,7 @@ import joblib
 
 tf.keras.mixed_precision.set_global_policy("mixed_float16")
 
+RECIPE_DATA = False
 #%%
 # ------------------------- Downloading and initializing -------------------------
 with open("src/modeling/modelconfig.yaml") as f:
@@ -27,7 +28,9 @@ bucket = boto3.resource(
 
 
 with io.BytesIO() as f:
-    bucket.download_fileobj("data/recipe_corpus.txt", f)
+    bucket.download_fileobj(
+        "data/recipe_corpus.txt" if RECIPE_DATA else "data/wallstbets_clean.txt", f
+    )
     f.seek(0)
     corpus = f.readlines()
 
@@ -45,12 +48,15 @@ train = tf.data.Dataset.from_tensor_slices((documents_train, documents_train))
 val = tf.data.Dataset.from_tensor_slices((documents_val, documents_val))
 
 
-RECREATE_VOCAB = False
+RECREATE_VOCAB = True
 VOCAB_SIZE = 1000
 bert_tokenizer_params = dict(lower_case=True)
 
+vocab_path = (
+    "artifacts/bert_vocab.txt" if RECIPE_DATA else "artifacts/bert_vocab_reddit.txt"
+)
 if RECREATE_VOCAB:
-    reserved_tokens = ["[PAD]", "[UNK]", "[START]", "[END]"]
+    reserved_tokens = ["[PAD]", "[UNK]", "<|START|>", "<|END|>"]
 
     bert_vocab_args = dict(
         vocab_size=VOCAB_SIZE,
@@ -66,12 +72,12 @@ if RECREATE_VOCAB:
     vocab = bert_vocab.bert_vocab_from_dataset(
         train.map(lambda x, y: x), **bert_vocab_args
     )
-    write_vocab_file("artifacts/bert_vocab.txt", vocab)
-    bucket.upload_file("artifacts/bert_vocab.txt", "artifacts/bert_vocab.txt")
-    logging.info("Uploaded artifacts/bert_vocab.txt")
+    write_vocab_file(vocab_path, vocab)
+    bucket.upload_file(vocab_path, vocab_path)
+    logging.info("Uploaded vocabulary.")
 
 
-tokenizer = BertTokenizer("artifacts/bert_vocab.txt", **bert_tokenizer_params)
+tokenizer = BertTokenizer(vocab_path, **bert_tokenizer_params)
 
 #%%
 BATCH_SIZE = config["training"].get("batch_size")
@@ -93,7 +99,7 @@ val_mapped = val.map(
 ).padded_batch(BATCH_SIZE)
 
 #%%
-with open("artifacts/bert_vocab.txt", "r") as f:
+with open(vocab_path, "r") as f:
     vocabulary = [line.strip("\n") for line in f.readlines()]
 
 #%%
@@ -176,9 +182,12 @@ def generate_from_model(seed: str, n_pred=100, temperature=0.7):
     return " ".join(x.decode("utf-8") for x in prediction_tensor.numpy().ravel())
 
 
-ret = generate_from_model("zuerst hähnchen")
+# ret = generate_from_model("zuerst hähnchen")
 
 #%%
-model.save_weights("artifacts/subword_model.h5")
-bucket.upload_file("artifacts/subword_model.h5", "artifacts/subword_model.h5")
+model_path = (
+    "artifacts/subword_model.h5" if RECIPE_DATA else "artifacts/subword_model_reddit.h5"
+)
+model.save_weights(model_path)
+bucket.upload_file(model_path, model_path)
 logging.info("Saved model weights.")
